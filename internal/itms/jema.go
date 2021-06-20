@@ -1,6 +1,8 @@
 package itms
 
-import "fmt"
+import (
+	"fmt"
+)
 
 func jemaInstrument(name string, index int, action string) error {
 	if err := jemaControl(action, index); err != nil {
@@ -13,19 +15,19 @@ func jemaInstrument(name string, index int, action string) error {
 func bath(action string) error {
 	return jemaInstrument("bath", 1, action)
 }
-func TurnOnBath() error {
+func turnOnBath() error {
 	return bath("ON")
 }
-func TurnOffBath() error {
+func turnOffBath() error {
 	return bath("OFF")
 }
 
 func floorHeating(action string) error {
 	return jemaInstrument("floor heating", 2, action)
 }
-func TurnOnFloorHeating() error {
+func turnOnFloorHeating() error {
 	return floorHeating("ON")
 }
-func TurnOffFloorHeating() error {
+func turnOffFloorHeating() error {
 	return floorHeating("OFF")
 }

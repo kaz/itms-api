@@ -1,6 +1,8 @@
 package itms
 
-import "os"
+import (
+	"os"
+)
 
 var (
 	credential = map[string]string{
