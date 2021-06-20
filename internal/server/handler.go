@@ -1,45 +1,34 @@
-package handler
+package server
 
 import (
 	"fmt"
 	"net/http"
-	"os"
 
-	"github.com/kaz/itms-api/itms"
+	"github.com/kaz/itms-api/internal/itms"
+	"github.com/labstack/echo/v4"
 )
 
-var (
-	token = os.Getenv("TOKEN")
+type (
+	PatchSwitchRequest struct {
+		Instrument itms.Instrument `json:"inst"`
+		Mode       itms.Mode       `json:"mode"`
+	}
 )
 
-func HandleControl(instrument string, action string) error {
-	if instrument[0] == 'b' && action == "on" {
-		return itms.TurnOnBath()
-	} else if instrument[0] == 'b' && action == "off" {
-		return itms.TurnOffBath()
-	} else if instrument[0] == 'f' && action == "on" {
-		return itms.TurnOnFloorHeating()
-	} else if instrument[0] == 'f' && action == "off" {
-		return itms.TurnOffFloorHeating()
+func patchSwitch(c echo.Context) error {
+	params := &PatchSwitchRequest{}
+	if err := c.Bind(params); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("failed to parse request: %v", err))
 	}
-	return fmt.Errorf("no such instrument/action")
-}
+	if params.Instrument == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("`inst` is required"))
+	}
+	if params.Mode == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("`mode` is required"))
+	}
 
-func Handler(w http.ResponseWriter, r *http.Request) {
-	if err := r.ParseForm(); err != nil {
-		fmt.Printf("error: ParseForm: %v", err)
-		w.WriteHeader(http.StatusBadRequest)
-		return
+	if err := itms.SwitchInstrumentMode(params.Instrument, params.Mode); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("failed to switch instrument mode: %v", err))
 	}
-	if token == "" || token != r.Form["token"][0] {
-		fmt.Printf("unauthorized access: remote_addr=%s", r.RemoteAddr)
-		w.WriteHeader(http.StatusUnauthorized)
-		return
-	}
-	if err := HandleControl(r.Form["instrument"][0], r.Form["action"][0]); err != nil {
-		fmt.Printf("error: HandleControl: %v", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-	w.WriteHeader(http.StatusNoContent)
+	return c.JSON(http.StatusOK, map[string]string{"message": "ok"})
 }
