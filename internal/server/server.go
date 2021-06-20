@@ -8,7 +8,7 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 )
 
-func Start() error {
+func Start(debug bool) error {
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
@@ -20,6 +20,11 @@ func Start() error {
 	}
 
 	e := echo.New()
+
+	e.Debug = debug
+	e.HidePort = !debug
+	e.HideBanner = !debug
+
 	e.Use(middleware.Logger())
 	e.Use(authenticator(token))
 
